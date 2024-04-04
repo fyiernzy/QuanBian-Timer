@@ -8,7 +8,7 @@
     "build": "electron-builder -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": "https://github.com/fyiernzy/QB-Timer",
+  "repository": "https://github.com/fyiernzy/QuanBian-Timer",
   "publish": {
     "provider": "github",
     "owner": "fyiernzy",
