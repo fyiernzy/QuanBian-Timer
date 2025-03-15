@@ -1,7 +1,16 @@
 import { useCallback } from "react";
 import { useTimer } from "react-timer-hook";
 
-const useTimerState = (expiryTimestamp) => {
+interface QbTimer {
+  isRunning: boolean;
+  seconds: number;
+  minutes: number;
+  toggle: () => void;
+  pause: () => void;
+  restart: () => void;
+}
+
+export const useQbTimer = (expiryTimestamp): QbTimer => {
   const {
     seconds,
     minutes,
@@ -15,7 +24,7 @@ const useTimerState = (expiryTimestamp) => {
     autoStart: false,
   });
 
-  const toggleRunning = useCallback(() => {
+  const toggle = useCallback(() => {
     if (isRunning) {
       pause();
     } else {
@@ -32,10 +41,8 @@ const useTimerState = (expiryTimestamp) => {
     isRunning,
     seconds,
     minutes,
-    toggleRunning,
+    toggle,
     pause,
     restart,
   };
 };
-
-export default useTimerState;
