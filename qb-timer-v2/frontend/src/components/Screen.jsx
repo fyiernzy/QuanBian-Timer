@@ -2,28 +2,31 @@ import Timer from "./Timer";
 import PauseModal from "./modals/PauseModal";
 import PropTypes from "prop-types";
 import { useState } from "react";
-import { useTimers } from "../hooks/useTimers";
-import useKeyboardShortcut from "../hooks/utils/useKeyboardShortcut";
+import { useQbTimers } from "../hooks/useQbTimers.tsx";
+import { useKeyboardShortcut } from "../hooks/useKeyboardShortcut.tsx";
+import { useKeyContext } from "../contexts/KeyContext";
 
-function Screen({ config, session }) {
+function Screen({ session }) {
   const [isPaused, setIsPaused] = useState(false);
   const {
-    primaryMinutes,
-    primarySeconds,
-    secondaryMinutes,
-    secondarySeconds,
-    isPrimaryRunning,
-    isSecondaryRunning,
-    togglePrimaryTimer,
-    toggleSecondaryTimer,
+    timer1Min,
+    timer1Sec,
+    timer2Min,
+    timer2Sec,
+    isTimer1Running,
+    isTimer2Running,
+    toggleTimer1,
+    toggleTimer2,
     restartTimers,
     pauseTimers,
-  } = useTimers(session.duration);
+  } = useQbTimers(session.duration);
 
-  useKeyboardShortcut(config.primaryTimerToggle, togglePrimaryTimer);
-  useKeyboardShortcut(config.secondaryTimerToggle, toggleSecondaryTimer);
-  useKeyboardShortcut(config.restart, restartTimers);
-  useKeyboardShortcut(config.pause, () => {
+  const { keys } = useKeyContext();
+
+  useKeyboardShortcut(keys.timer1, toggleTimer1);
+  useKeyboardShortcut(keys.timer2, toggleTimer2);
+  useKeyboardShortcut(keys.restart, restartTimers);
+  useKeyboardShortcut(keys.pause, () => {
     pauseTimers();
     setIsPaused((prev) => !prev);
   });
@@ -32,26 +35,26 @@ function Screen({ config, session }) {
     <div className="w-screen h-screen flex justify-center">
       <Timer
         key="Primary"
-        minutes={primaryMinutes}
-        seconds={primarySeconds}
+        minutes={timer1Min}
+        seconds={timer1Sec}
         label={session.label1}
         isActive={
-          session.isDualTimer && isPrimaryRunning && !isSecondaryRunning
+          session.isDualTimer && isTimer1Running && !isTimer2Running
         }
         idleStyle="text-slate-400"
-        activeStyle={"text-blue-500"}
+        activeStyle="text-blue-500"
       />
       {session.isDualTimer && (
         <Timer
           key="Secondary"
-          minutes={secondaryMinutes}
-          seconds={secondarySeconds}
+          minutes={timer2Min}
+          seconds={timer2Sec}
           label={session.label2}
           isActive={
-            session.isDualTimer && !isPrimaryRunning && isSecondaryRunning
+            session.isDualTimer && !isTimer1Running && isTimer2Running
           }
           idleStyle="text-slate-400"
-          activeStyle={"text-red-500"}
+          activeStyle="text-red-500"
         />
       )}
       {isPaused && <PauseModal isOpen={isPaused} onClose={pauseTimers} />}
