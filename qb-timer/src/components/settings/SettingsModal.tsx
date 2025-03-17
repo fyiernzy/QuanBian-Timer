@@ -6,58 +6,15 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    TextField,
-    Checkbox,
-    FormControlLabel,
-    FormControl,
     InputLabel,
+    FormControl,
     Select,
     MenuItem,
     Box,
-    Typography,
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
-
-// -------------------
-// Type Definitions
-// -------------------
-export interface FontEffectConfig {
-    fontSize: number;
-    fontColor: string;
-    italic: boolean;
-    bold: boolean;
-    underline: boolean;
-    glowX: number;
-    glowY: number;
-    glowBlur: number;
-    glowColor: string;
-    customCssColor: string; // might be optional or unused
-}
-
-export interface FontStanceConfig {
-    active: FontEffectConfig;
-    idle: FontEffectConfig;
-}
-
-export interface FontConfig {
-    fontFamily: "system" | "custom";
-    customFontFile?: File | null;
-    stanceA: FontStanceConfig;
-    stanceB: FontStanceConfig;
-}
-
-export interface SettingsData {
-    jsonData?: any;
-    imageA?: File | null;
-    imageB?: File | null;
-    fontConfig: FontConfig;
-}
-
-interface SettingsModalProps {
-    open: boolean;
-    onClose: () => void;
-    onSave: (data: SettingsData) => void;
-}
+import { FontEffectConfig, FontStanceConfig, FontConfig, SettingsData } from "../../interfaces/types";
+import StanceEditor from "./StanceEditor";
 
 // -------------------
 // Default Values
@@ -87,6 +44,12 @@ const defaultFontConfig: FontConfig = {
     stanceB: { ...defaultFontStanceConfig },
 };
 
+interface SettingsModalProps {
+    open: boolean;
+    onClose: () => void;
+    onSave: (data: SettingsData) => void;
+}
+
 const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) => {
     const [jsonData, setJsonData] = useState<any>(null);
     const [imageA, setImageA] = useState<File | null>(null);
@@ -94,6 +57,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
     const [fontConfig, setFontConfig] = useState<FontConfig>(defaultFontConfig);
     const [customFontURL, setCustomFontURL] = useState<string | undefined>(undefined);
 
+    // If a custom font is uploaded, create an object URL and inject an @font-face.
     useEffect(() => {
         if (fontConfig.fontFamily === "custom" && fontConfig.customFontFile) {
             const url = URL.createObjectURL(fontConfig.customFontFile);
@@ -155,18 +119,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
     };
 
     // -------------------
-    // Font Family Changes
+    // Font Family
     // -------------------
-    const handleCommonFontChange = (field: keyof Pick<FontConfig, "fontFamily" | "customFontFile">) => (
-        e: ChangeEvent<HTMLInputElement> | SelectChangeEvent<"system" | "custom">
-    ) => {
-        if (field === "fontFamily") {
-            const value = (e as SelectChangeEvent<"system" | "custom">).target.value;
-            setFontConfig((prev) => ({
-                ...prev,
-                fontFamily: value as "system" | "custom",
-            }));
-        }
+    const handleCommonFontChange = (e: SelectChangeEvent<"system" | "custom">) => {
+        setFontConfig((prev) => ({
+            ...prev,
+            fontFamily: e.target.value as "system" | "custom",
+        }));
     };
 
     const handleCustomFontUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -178,7 +137,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
     };
 
     // -------------------
-    // Preview Styles
+    // Compute Inline Style from FontEffectConfig
     // -------------------
     const computePreviewStyle = (effect: FontEffectConfig): React.CSSProperties => ({
         fontSize: `${effect.fontSize}px`,
@@ -191,7 +150,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
         fontStyle: effect.italic ? "italic" : "normal",
         fontWeight: effect.bold ? "bold" : "normal",
         textDecoration: effect.underline ? "underline" : "none",
-        // CHANGED HERE: use effect.fontColor so that changes to "Font Color" are actually visible
         color: effect.fontColor,
         textShadow: `${effect.glowX}px ${effect.glowY}px ${effect.glowBlur}px ${effect.glowColor}`,
         transition: "all 0.3s ease",
@@ -214,11 +172,11 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
             {customFontURL && (
                 <style>
                     {`
-                        @font-face {
-                            font-family: "CustomFont";
-                            src: url(${customFontURL});
-                        }
-                    `}
+            @font-face {
+              font-family: "CustomFont";
+              src: url(${customFontURL});
+            }
+          `}
                 </style>
             )}
             <DialogTitle>Customize Settings</DialogTitle>
@@ -242,13 +200,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
                         </Box>
                     </Box>
 
-                    {/* Common Font Family Configuration */}
+                    {/* Font Family Selector */}
                     <Box>
                         <InputLabel>Font Family</InputLabel>
                         <FormControl fullWidth>
                             <Select
                                 value={fontConfig.fontFamily}
-                                onChange={handleCommonFontChange("fontFamily")}
+                                onChange={handleCommonFontChange}
                                 label="Font Family"
                             >
                                 <MenuItem value="system">System Font</MenuItem>
@@ -263,445 +221,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ open, onClose, onSave }) 
                         )}
                     </Box>
 
-                    {/* Stance A Font Configuration */}
-                    <Box border={1} borderColor="grey.300" borderRadius={2} p={2}>
-                        <Typography variant="h6">Stance A Font Settings</Typography>
-                        {/* Active Configuration */}
-                        <Typography variant="subtitle1">Active Configuration</Typography>
-                        <Box display="flex" flexDirection="column" gap={1}>
-                            <TextField
-                                label="Font Size"
-                                type="number"
-                                value={fontConfig.stanceA.active.fontSize}
-                                onChange={(e) =>
-                                    updateStanceConfig("stanceA", "active", "fontSize", Number(e.target.value))
-                                }
-                                fullWidth
-                            />
-                            <TextField
-                                label="Font Color"
-                                type="color"
-                                value={fontConfig.stanceA.active.fontColor}
-                                onChange={(e) =>
-                                    updateStanceConfig("stanceA", "active", "fontColor", e.target.value)
-                                }
-                                InputLabelProps={{ shrink: true }}
-                            />
-                            <Box display="flex" gap={1}>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={fontConfig.stanceA.active.italic}
-                                            onChange={(e) =>
-                                                updateStanceConfig("stanceA", "active", "italic", e.target.checked)
-                                            }
-                                        />
-                                    }
-                                    label="Italic"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={fontConfig.stanceA.active.bold}
-                                            onChange={(e) =>
-                                                updateStanceConfig("stanceA", "active", "bold", e.target.checked)
-                                            }
-                                        />
-                                    }
-                                    label="Bold"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={fontConfig.stanceA.active.underline}
-                                            onChange={(e) =>
-                                                updateStanceConfig("stanceA", "active", "underline", e.target.checked)
-                                            }
-                                        />
-                                    }
-                                    label="Underline"
-                                />
-                            </Box>
-                            <Box display="flex" gap={1} flexWrap="wrap">
-                                <TextField
-                                    label="Glow X"
-                                    type="number"
-                                    value={fontConfig.stanceA.active.glowX}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "active", "glowX", Number(e.target.value))
-                                    }
-                                />
-                                <TextField
-                                    label="Glow Y"
-                                    type="number"
-                                    value={fontConfig.stanceA.active.glowY}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "active", "glowY", Number(e.target.value))
-                                    }
-                                />
-                                <TextField
-                                    label="Glow Blur"
-                                    type="number"
-                                    value={fontConfig.stanceA.active.glowBlur}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "active", "glowBlur", Number(e.target.value))
-                                    }
-                                />
-                                <TextField
-                                    label="Glow Color"
-                                    type="color"
-                                    value={fontConfig.stanceA.active.glowColor}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "active", "glowColor", e.target.value)
-                                    }
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                            </Box>
-                            <TextField
-                                label="Custom CSS Color Snippet"
-                                multiline
-                                minRows={2}
-                                value={fontConfig.stanceA.active.customCssColor}
-                                onChange={(e) =>
-                                    updateStanceConfig("stanceA", "active", "customCssColor", e.target.value)
-                                }
-                                fullWidth
-                            />
-                        </Box>
-
-                        {/* Idle Configuration */}
-                        <Box mt={2}>
-                            <Typography variant="subtitle1">Idle Configuration</Typography>
-                            <Box display="flex" flexDirection="column" gap={1}>
-                                <TextField
-                                    label="Font Size (Idle)"
-                                    type="number"
-                                    value={fontConfig.stanceA.idle.fontSize}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "idle", "fontSize", Number(e.target.value))
-                                    }
-                                    fullWidth
-                                />
-                                <TextField
-                                    label="Font Color (Idle)"
-                                    type="color"
-                                    value={fontConfig.stanceA.idle.fontColor}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "idle", "fontColor", e.target.value)
-                                    }
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <Box display="flex" gap={1}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={fontConfig.stanceA.idle.italic}
-                                                onChange={(e) =>
-                                                    updateStanceConfig("stanceA", "idle", "italic", e.target.checked)
-                                                }
-                                            />
-                                        }
-                                        label="Italic"
-                                    />
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={fontConfig.stanceA.idle.bold}
-                                                onChange={(e) =>
-                                                    updateStanceConfig("stanceA", "idle", "bold", e.target.checked)
-                                                }
-                                            />
-                                        }
-                                        label="Bold"
-                                    />
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={fontConfig.stanceA.idle.underline}
-                                                onChange={(e) =>
-                                                    updateStanceConfig("stanceA", "idle", "underline", e.target.checked)
-                                                }
-                                            />
-                                        }
-                                        label="Underline"
-                                    />
-                                </Box>
-                                <Box display="flex" gap={1} flexWrap="wrap">
-                                    <TextField
-                                        label="Glow X (Idle)"
-                                        type="number"
-                                        value={fontConfig.stanceA.idle.glowX}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceA", "idle", "glowX", Number(e.target.value))
-                                        }
-                                    />
-                                    <TextField
-                                        label="Glow Y (Idle)"
-                                        type="number"
-                                        value={fontConfig.stanceA.idle.glowY}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceA", "idle", "glowY", Number(e.target.value))
-                                        }
-                                    />
-                                    <TextField
-                                        label="Glow Blur (Idle)"
-                                        type="number"
-                                        value={fontConfig.stanceA.idle.glowBlur}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceA", "idle", "glowBlur", Number(e.target.value))
-                                        }
-                                    />
-                                    <TextField
-                                        label="Glow Color (Idle)"
-                                        type="color"
-                                        value={fontConfig.stanceA.idle.glowColor}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceA", "idle", "glowColor", e.target.value)
-                                        }
-                                        InputLabelProps={{ shrink: true }}
-                                    />
-                                </Box>
-                                <TextField
-                                    label="Custom CSS Color Snippet (Idle)"
-                                    multiline
-                                    minRows={2}
-                                    value={fontConfig.stanceA.idle.customCssColor}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceA", "idle", "customCssColor", e.target.value)
-                                    }
-                                    fullWidth
-                                />
-                            </Box>
-                        </Box>
-
-                        {/* Stance A Preview */}
-                        <Box mt={2}>
-                            <Typography variant="subtitle2">Stance A Active Preview</Typography>
-                            <Box mt={1} p={2} style={computePreviewStyle(fontConfig.stanceA.active)}>
-                                The quick brown fox jumps over the lazy dog.
-                            </Box>
-                        </Box>
-                    </Box>
-
-                    {/* Stance B Font Configuration */}
-                    <Box border={1} borderColor="grey.300" borderRadius={2} p={2}>
-                        <Typography variant="h6">Stance B Font Settings</Typography>
-                        {/* Active Configuration */}
-                        <Typography variant="subtitle1">Active Configuration</Typography>
-                        <Box display="flex" flexDirection="column" gap={1}>
-                            <TextField
-                                label="Font Size"
-                                type="number"
-                                value={fontConfig.stanceB.active.fontSize}
-                                onChange={(e) =>
-                                    updateStanceConfig("stanceB", "active", "fontSize", Number(e.target.value))
-                                }
-                                fullWidth
-                            />
-                            <TextField
-                                label="Font Color"
-                                type="color"
-                                value={fontConfig.stanceB.active.fontColor}
-                                onChange={(e) =>
-                                    updateStanceConfig("stanceB", "active", "fontColor", e.target.value)
-                                }
-                                InputLabelProps={{ shrink: true }}
-                            />
-                            <Box display="flex" gap={1}>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={fontConfig.stanceB.active.italic}
-                                            onChange={(e) =>
-                                                updateStanceConfig("stanceB", "active", "italic", e.target.checked)
-                                            }
-                                        />
-                                    }
-                                    label="Italic"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={fontConfig.stanceB.active.bold}
-                                            onChange={(e) =>
-                                                updateStanceConfig("stanceB", "active", "bold", e.target.checked)
-                                            }
-                                        />
-                                    }
-                                    label="Bold"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            checked={fontConfig.stanceB.active.underline}
-                                            onChange={(e) =>
-                                                updateStanceConfig("stanceB", "active", "underline", e.target.checked)
-                                            }
-                                        />
-                                    }
-                                    label="Underline"
-                                />
-                            </Box>
-                            <Box display="flex" gap={1} flexWrap="wrap">
-                                <TextField
-                                    label="Glow X"
-                                    type="number"
-                                    value={fontConfig.stanceB.active.glowX}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "active", "glowX", Number(e.target.value))
-                                    }
-                                />
-                                <TextField
-                                    label="Glow Y"
-                                    type="number"
-                                    value={fontConfig.stanceB.active.glowY}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "active", "glowY", Number(e.target.value))
-                                    }
-                                />
-                                <TextField
-                                    label="Glow Blur"
-                                    type="number"
-                                    value={fontConfig.stanceB.active.glowBlur}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "active", "glowBlur", Number(e.target.value))
-                                    }
-                                />
-                                <TextField
-                                    label="Glow Color"
-                                    type="color"
-                                    value={fontConfig.stanceB.active.glowColor}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "active", "glowColor", e.target.value)
-                                    }
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                            </Box>
-                            <TextField
-                                label="Custom CSS Color Snippet"
-                                multiline
-                                minRows={2}
-                                value={fontConfig.stanceB.active.customCssColor}
-                                onChange={(e) =>
-                                    updateStanceConfig("stanceB", "active", "customCssColor", e.target.value)
-                                }
-                                fullWidth
-                            />
-                        </Box>
-
-                        {/* Idle Configuration */}
-                        <Box mt={2}>
-                            <Typography variant="subtitle1">Idle Configuration</Typography>
-                            <Box display="flex" flexDirection="column" gap={1}>
-                                <TextField
-                                    label="Font Size (Idle)"
-                                    type="number"
-                                    value={fontConfig.stanceB.idle.fontSize}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "idle", "fontSize", Number(e.target.value))
-                                    }
-                                    fullWidth
-                                />
-                                <TextField
-                                    label="Font Color (Idle)"
-                                    type="color"
-                                    value={fontConfig.stanceB.idle.fontColor}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "idle", "fontColor", e.target.value)
-                                    }
-                                    InputLabelProps={{ shrink: true }}
-                                />
-                                <Box display="flex" gap={1}>
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={fontConfig.stanceB.idle.italic}
-                                                onChange={(e) =>
-                                                    updateStanceConfig("stanceB", "idle", "italic", e.target.checked)
-                                                }
-                                            />
-                                        }
-                                        label="Italic"
-                                    />
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={fontConfig.stanceB.idle.bold}
-                                                onChange={(e) =>
-                                                    updateStanceConfig("stanceB", "idle", "bold", e.target.checked)
-                                                }
-                                            />
-                                        }
-                                        label="Bold"
-                                    />
-                                    <FormControlLabel
-                                        control={
-                                            <Checkbox
-                                                checked={fontConfig.stanceB.idle.underline}
-                                                onChange={(e) =>
-                                                    updateStanceConfig("stanceB", "idle", "underline", e.target.checked)
-                                                }
-                                            />
-                                        }
-                                        label="Underline"
-                                    />
-                                </Box>
-                                <Box display="flex" gap={1} flexWrap="wrap">
-                                    <TextField
-                                        label="Glow X (Idle)"
-                                        type="number"
-                                        value={fontConfig.stanceB.idle.glowX}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceB", "idle", "glowX", Number(e.target.value))
-                                        }
-                                    />
-                                    <TextField
-                                        label="Glow Y (Idle)"
-                                        type="number"
-                                        value={fontConfig.stanceB.idle.glowY}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceB", "idle", "glowY", Number(e.target.value))
-                                        }
-                                    />
-                                    <TextField
-                                        label="Glow Blur (Idle)"
-                                        type="number"
-                                        value={fontConfig.stanceB.idle.glowBlur}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceB", "idle", "glowBlur", Number(e.target.value))
-                                        }
-                                    />
-                                    <TextField
-                                        label="Glow Color (Idle)"
-                                        type="color"
-                                        value={fontConfig.stanceB.idle.glowColor}
-                                        onChange={(e) =>
-                                            updateStanceConfig("stanceB", "idle", "glowColor", e.target.value)
-                                        }
-                                        InputLabelProps={{ shrink: true }}
-                                    />
-                                </Box>
-                                <TextField
-                                    label="Custom CSS Color Snippet (Idle)"
-                                    multiline
-                                    minRows={2}
-                                    value={fontConfig.stanceB.idle.customCssColor}
-                                    onChange={(e) =>
-                                        updateStanceConfig("stanceB", "idle", "customCssColor", e.target.value)
-                                    }
-                                    fullWidth
-                                />
-                            </Box>
-                        </Box>
-
-                        {/* Stance B Preview */}
-                        <Box mt={2}>
-                            <Typography variant="subtitle2">Stance B Active Preview</Typography>
-                            <Box mt={1} p={2} style={computePreviewStyle(fontConfig.stanceB.active)}>
-                                The quick brown fox jumps over the lazy dog.
-                            </Box>
-                        </Box>
-                    </Box>
+                    {/* Stance A and Stance B Editors */}
+                    <StanceEditor
+                        stanceLabel="Stance A"
+                        stanceConfig={fontConfig.stanceA}
+                        onUpdate={(mode, field, value) => updateStanceConfig("stanceA", mode, field, value)}
+                        computePreviewStyle={computePreviewStyle}
+                    />
+                    <StanceEditor
+                        stanceLabel="Stance B"
+                        stanceConfig={fontConfig.stanceB}
+                        onUpdate={(mode, field, value) => updateStanceConfig("stanceB", mode, field, value)}
+                        computePreviewStyle={computePreviewStyle}
+                    />
                 </Box>
             </DialogContent>
             <DialogActions>
