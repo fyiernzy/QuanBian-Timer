@@ -1,5 +1,5 @@
 import {useState} from "react";
-import DurationPicker from "./DurationPicker";
+import DurationPicker from "./DurationPicker.tsx";
 
 interface AddSessionModalProps {
     setIsModalOpen: (isOpen: boolean) => void;

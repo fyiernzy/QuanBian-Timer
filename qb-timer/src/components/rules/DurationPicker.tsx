@@ -1,4 +1,4 @@
-import TimeInput from "./TimeInput";
+import TimeInput from "./TimeInput.tsx";
 import * as React from "react";
 
 interface DurationPickerProps {
