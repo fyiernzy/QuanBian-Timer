@@ -10,7 +10,7 @@ interface QbTimer {
   restart: () => void;
 }
 
-export const useQbTimer = (expiryTimestamp): QbTimer => {
+export const useQbTimer = (expiryTimestamp: Date): QbTimer => {
   const {
     seconds,
     minutes,

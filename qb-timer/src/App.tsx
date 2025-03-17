@@ -1,35 +1,70 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import {useState} from 'react'
 import './App.css'
+import {KeyProvider} from "./contexts/KeyContext.tsx";
+import {SessionData, SessionType, StanceType} from "./interfaces/SessionData.ts";
+import MainModal from "./components/MainModal.tsx";
+import SettingsModal, {SettingsData} from "./components/settings/SettingsModal.tsx";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const sessions: SessionData[] = [
+        {
+            name: "正方三辩小结",
+            duration: 120,
+            type: SessionType.Single,
+            label1: "正方三辩小结",
+            stance: StanceType.Affirmative
+        },
+        {
+            name: "正方三辩小结",
+            duration: 120,
+            type: SessionType.Duo,
+            label1: "正方三辩小结",
+            label2: "反方三辩小结",
+            stance: StanceType.Affirmative
+        },
+    ];
 
-  return (
-    <>
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const handleSaveSettings = (settingsData: SettingsData) => {
+        console.log("Settings saved:", settingsData);
+        // You can persist these settings as needed.
+    };
+
+    return (
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-blue-500 text-red rounded"
+        >
+          Open Modal
         </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+          <SettingsModal
+              open={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onSave={handleSaveSettings}
+          />
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    );
+
+
+    // return (
+    //     <KeyProvider>
+    //         <MainModal sessions={sessions}/>
+    //     </KeyProvider>
+    // );
+
+    // return (
+    //   <div>
+    //     <button
+    //       onClick={() => setIsModalOpen(true)}
+    //       className="px-4 py-2 bg-blue-500 text-red rounded"
+    //     >
+    //       Open Modal
+    //     </button>
+    //     <SessionConfigModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    //   </div>
+    // );
 }
 
 export default App

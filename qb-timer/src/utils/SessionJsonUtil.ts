@@ -1,4 +1,4 @@
-import {SessionData, SessionType} from "../../interfaces/SessionData.ts";
+import {SessionData, SessionType} from "../interfaces/SessionData.ts";
 
 export const isValidSessionData = (item: any): item is SessionData => {
     if (typeof item !== "object" || item === null) return false;
